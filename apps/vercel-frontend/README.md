@@ -52,8 +52,9 @@ From then on:
 
 - every push to `main` deploys to production;
 - every pull request gets its own **preview URL**;
-- commits that don't touch this folder (backend changes, the CI bot's chart
-  updates, docs) are **skipped**, thanks to `ignoreCommand` in `vercel.json`.
+- pushes that don't touch this folder since the last deployment (backend
+  changes, the CI bot's chart updates, docs) are **skipped**, thanks to
+  `ignoreCommand` in `vercel.json`.
 
 ### Option B: from your terminal
 
@@ -72,6 +73,6 @@ npx vercel --prod   # deploy to production
 |---|---|
 | `framework`, `buildCommand`, `outputDirectory` | Build with Vite into `dist/` |
 | `installCommand: npm ci` | Install exactly what `package-lock.json` says |
-| `ignoreCommand` | Skip the build when nothing in this folder changed |
+| `ignoreCommand` | Skip the build when nothing in this folder changed **since the last successful deployment** (always builds the first time) |
 | `rewrites` → `/index.html` | Client-side routes like `/method/cfop` work on refresh and direct links |
 | `headers` on `/assets/*` | Hashed JS/CSS files are cached for a year |
