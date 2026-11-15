@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { createSolved, type ColorKey, type CubeState } from '../cube/model'
-import type { Formula, Method } from '../data/methods'
+import type { Formula, Method } from '../api/types'
 
 export type GuideStep = 1 | 2 | 3
 export interface Hold { up: ColorKey; front: ColorKey }

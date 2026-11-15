@@ -1,12 +1,14 @@
 import { useEffect, useRef } from 'react'
 import { Link, useLocation } from 'react-router'
-import { METHODS } from '../data/methods'
+import { useMethods } from '../api/useApi'
+import LoadState from './LoadState'
 import { PixelFace } from './Pixel'
 
 /** "Choose a method" window, built on the native <dialog> (focus trap + Esc for free). */
 export default function MethodPicker({ open, onClose }: { open: boolean; onClose: () => void }) {
   const ref = useRef<HTMLDialogElement>(null)
   const { pathname } = useLocation()
+  const methods = useMethods()
 
   useEffect(() => {
     const d = ref.current
@@ -35,9 +37,10 @@ export default function MethodPicker({ open, onClose }: { open: boolean; onClose
           New to cubing? Start with <strong>Absolute Beginner</strong>.
         </p>
 
+        <LoadState res={methods} label="methods" />
         <ul className="picker-list">
-          {METHODS.map((m, i) => {
-            const formulas = m.stages.reduce((n, s) => n + s.formulas.length, 0)
+          {(methods.status === 'success' ? methods.data : []).map((m, i) => {
+            const formulas = m.formulaCount
             const current = pathname === `/method/${m.slug}`
             const inner = (
               <>
@@ -50,7 +53,7 @@ export default function MethodPicker({ open, onClose }: { open: boolean; onClose
                   </span>
                   <span className="picker-tagline">{m.tagline}</span>
                   <span className="picker-meta">
-                    {m.level} · {m.stages.length} stages · {formulas} formulas · {m.avgMoves} moves
+                    {m.level} · {m.stageCount} stages · {formulas} formulas · {m.avgMoves} moves
                   </span>
                 </span>
                 <PixelFace pattern={m.face} size={48} className="picker-face" />

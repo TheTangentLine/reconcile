@@ -4,13 +4,18 @@ import Guide from '../components/Guide'
 import { useGuideState } from '../components/guideState'
 import { useMethodPicker } from '../components/methodPicker'
 import { PixelFace } from '../components/Pixel'
-import { getMethod, type Method } from '../data/methods'
+import type { Method } from '../api/types'
+import { useMethod } from '../api/useApi'
+import LoadState from '../components/LoadState'
 import NotFound from './NotFound'
 
 export default function MethodPage() {
-  const { slug } = useParams()
-  const method = getMethod(slug)
-  if (!method || method.comingSoon) return <NotFound />
+  const { slug = '' } = useParams()
+  const res = useMethod(slug)
+  if (res.status === 'error' && res.error.status === 404) return <NotFound />
+  if (res.status !== 'success') return <div className="block"><LoadState res={res} label="this method" /></div>
+  const method = res.data
+  if (method.comingSoon) return <NotFound />
   // Keyed so guide state resets when switching methods.
   return <MethodContent key={method.slug} method={method} />
 }

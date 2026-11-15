@@ -1,11 +1,12 @@
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 import { Link } from 'react-router'
 import { useMethodPicker } from '../components/methodPicker'
 import { PixelArt, PixelFace } from '../components/Pixel'
 import { BRUSH, CLOUD, HEART, LIST, MOUSE, PAUSE, PLAY, SPARKLE, UP_ARROW } from '../components/pixelIcons'
 import CubeView, { type ActiveMove } from '../cube/CubeView'
 import { applyMove, createSolved, parseAlg, type CubeState } from '../cube/model'
-import { METHODS } from '../data/methods'
+import { useMethods } from '../api/useApi'
+import LoadState from '../components/LoadState'
 
 const LOOP_ALG = "R U R' U' R' F R2 U' R' U' R U R' F'"
 const LOOP = parseAlg(LOOP_ALG)
@@ -51,10 +52,10 @@ export default function HomePage() {
   const picker = useMethodPicker()
   const idle = useIdleLoop()
   const [pixel, setPixel] = useState(true)
-  const formulas = useMemo(
-    () => METHODS.reduce((n, m) => n + m.stages.reduce((k, s) => k + s.formulas.length, 0), 0),
-    [],
-  )
+  const methods = useMethods()
+  const formulas = methods.status === 'success'
+    ? methods.data.reduce((n, m) => n + m.formulaCount, 0)
+    : '--'
 
   return (
     <div className="home">
@@ -149,9 +150,10 @@ export default function HomePage() {
           </div>
           <button type="button" className="btn" onClick={picker.open}>Compare all</button>
         </header>
-        <div className="tiles">
-          {METHODS.map((m) => {
-            const count = m.stages.reduce((n, s) => n + s.formulas.length, 0)
+        <LoadState res={methods} label="methods" />
+        {methods.status === 'success' && <div className="tiles">
+          {methods.data.map((m) => {
+            const count = m.formulaCount
             const body = (
               <>
                 <div className="tile-head">
@@ -172,7 +174,7 @@ export default function HomePage() {
               <Link key={m.slug} to={`/method/${m.slug}`} className="tile" style={{ background: m.accent }}>{body}</Link>
             )
           })}
-        </div>
+        </div>}
       </section>
 
       {/* ---------- How it works ---------- */}

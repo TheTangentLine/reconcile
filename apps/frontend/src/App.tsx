@@ -4,7 +4,7 @@ import MethodPicker from './components/MethodPicker'
 import { MethodPickerContext } from './components/methodPicker'
 import { PixelArt } from './components/Pixel'
 import { HEART } from './components/pixelIcons'
-import { METHODS } from './data/methods'
+import { useMethods } from './api/useApi'
 import HomePage from './pages/HomePage'
 import MethodPage from './pages/MethodPage'
 import NotFound from './pages/NotFound'
@@ -34,6 +34,7 @@ function Stamp() {
 }
 
 export default function App() {
+  const methods = useMethods()
   const [pickerOpen, setPickerOpen] = useState(false)
   const picker = useMemo(() => ({ open: () => setPickerOpen(true) }), [])
 
@@ -86,7 +87,7 @@ export default function App() {
           </div>
           <nav className="foot-cell foot-links" aria-label="Footer">
             <button type="button" className="link-plain" onClick={picker.open}>All methods</button>
-            {METHODS.filter((m) => !m.comingSoon).map((m) => (
+            {(methods.status === 'success' ? methods.data : []).filter((m) => !m.comingSoon).map((m) => (
               <Link key={m.slug} to={`/method/${m.slug}`}>{m.name}</Link>
             ))}
             <span className="muted">© 2026 Reconcile</span>

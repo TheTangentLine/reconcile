@@ -3,7 +3,7 @@ import {
   applyMoves, caseState, COLORS, createSolved, getFacelet, orientationMoves,
   type ColorKey, type CubeState,
 } from '../cube/model'
-import type { Formula } from '../data/methods'
+import type { Formula } from '../api/types'
 
 /** Top-down view of the case a formula solves: the U face plus the top row of each side. */
 export default function CaseDiagram({ formula, size = 96 }: { formula: Formula; size?: number }) {

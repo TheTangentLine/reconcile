@@ -707,3 +707,15 @@ a.picker-item:hover, a.picker-item:focus-visible { background: var(--yellow-soft
   *, *::before, *::after { animation: none !important; transition: none !important; }
   html { scroll-behavior: auto; }
 }
+
+/* ---------- API loading / error states ---------- */
+.load-state {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 18px 20px; border: var(--bw) dashed var(--ink);
+  font-family: var(--pixel); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.04em;
+}
+.load-state.is-error { border-style: solid; background: var(--warn-bg); color: var(--warn); }
+.load-state.is-error .btn { color: var(--ink); }
+.load-state .dots::after { content: ''; animation: load-dots 1.2s steps(4) infinite; }
+@keyframes load-dots { 0% { content: ''; } 25% { content: '.'; } 50% { content: '..'; } 75% { content: '...'; } }
+@media (prefers-reduced-motion: reduce) { .load-state .dots::after { animation: none; content: '...'; } }

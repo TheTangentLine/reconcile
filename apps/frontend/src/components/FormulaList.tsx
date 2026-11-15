@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { parseAlg } from '../cube/model'
-import type { Formula, Method } from '../data/methods'
+import type { Formula, Method } from '../api/types'
 import CaseDiagram from './CaseDiagram'
 
 function CopyButton({ text }: { text: string }) {

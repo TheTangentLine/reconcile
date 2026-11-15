@@ -6,7 +6,7 @@ import {
   type ColorKey,
 } from '../cube/model'
 import { usePlayback } from '../cube/usePlayback'
-import type { Formula, Method } from '../data/methods'
+import type { Formula, Method } from '../api/types'
 import type { GuideState, GuideStep } from './guideState'
 import CaseDiagram from './CaseDiagram'
 import FaceNetEditor, { ColorPalette } from './FaceNetEditor'
