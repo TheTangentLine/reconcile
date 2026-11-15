@@ -363,7 +363,7 @@ cd infra && terraform destroy
 [`apps/vercel-frontend`](apps/vercel-frontend/README.md) is the same site with
 the method and formula data **bundled in**, so it needs no backend or
 database. It's the quickest way to put the app online, and it's free on
-Vercel's hobby plan.
+Vercel's hobby plan. **Live at https://reconcile-rubik.vercel.app**
 
 ```bash
 cd apps/vercel-frontend

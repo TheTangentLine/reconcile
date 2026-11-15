@@ -4,6 +4,8 @@ The Reconcile frontend as a **fully static site**: no backend, no database.
 Method and formula data is bundled into the JavaScript, so it can be hosted
 anywhere that serves static files. It's set up for [Vercel](https://vercel.com).
 
+**Live:** https://reconcile-rubik.vercel.app
+
 It's a copy of [`apps/frontend`](../frontend) with one difference: the data
 layer.
 
