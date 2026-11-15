@@ -4,10 +4,10 @@ on:
   push:
     branches: [main]
     # GitOps commits (image tag bumps in charts/) and docs shouldn't rebuild images.
-    paths-ignore: ['charts/**', '**/*.md']
+    paths-ignore: ['charts/**', 'argocd/**', '**/*.md']
   pull_request:
     branches: [main]
-    paths-ignore: ['charts/**', '**/*.md']
+    paths-ignore: ['charts/**', 'argocd/**', '**/*.md']
   workflow_dispatch:
 
 concurrency:

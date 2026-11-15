@@ -1,0 +1,55 @@
+# Argo CD Application for Reconcile.
+#
+# Argo CD watches charts/reconcile on main. CI's "Update chart image tags" job
+# commits each new image SHA into values.yaml, and Argo CD rolls it out.
+#
+# One-time setup in the cluster:
+#   kubectl create namespace reconcile
+#   kubectl -n reconcile create secret generic reconcile-mongodb-auth \
+#     --from-literal=mongodb-root-username=root \
+#     --from-literal=mongodb-root-password="$(openssl rand -hex 24)"
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: reconcile
+  namespace: argocd
+  # Deleting the Application also deletes what it deployed.
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+
+  source:
+    repoURL: https://github.com/TheTangentLine/reconcile.git
+    targetRevision: main
+    path: charts/reconcile
+    helm:
+      releaseName: reconcile
+      valueFiles:
+        - values.yaml
+      # Cluster-specific overrides on top of the chart's values.yaml.
+      valuesObject:
+        mongodb:
+          auth:
+            # Argo CD renders charts without cluster access, so a generated
+            # password would change on every sync. Use the Secret created above.
+            existingSecret: reconcile-mongodb-auth
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: reconcile
+
+  syncPolicy:
+    automated:
+      prune: true    # remove resources that were deleted from the chart
+      selfHeal: true # undo manual changes made in the cluster
+    syncOptions:
+      - CreateNamespace=true
+    retry:
+      limit: 5
+      backoff:
+        duration: 10s
+        factor: 2
+        maxDuration: 3m
+
+  revisionHistoryLimit: 10
