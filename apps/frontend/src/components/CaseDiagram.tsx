@@ -53,3 +53,4 @@ export default function CaseDiagram({ formula, size = 96 }: { formula: Formula; 
     </svg>
   )
 }
+
