@@ -1,0 +1,41 @@
+name: Chart
+
+on:
+  pull_request:
+    paths: ['charts/**', '.github/workflows/chart.yml']
+  push:
+    branches: [main]
+    paths: ['charts/**', '.github/workflows/chart.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    name: Lint and validate
+    runs-on: ubuntu-24.04
+    env:
+      CHART: charts/reconcile
+      # Tags may still be empty before the first CI image build.
+      TAGS: backend.image.tag=ci,frontend.image.tag=ci
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: azure/setup-helm@v5
+
+      - name: helm lint
+        run: helm lint "$CHART" --set "$TAGS" --strict
+
+      - name: Render default and external-database variants
+        run: |
+          mkdir -p rendered
+          helm template reconcile "$CHART" -n reconcile --set "$TAGS" > rendered/default.yaml
+          helm template reconcile "$CHART" -n reconcile --set "$TAGS" \
+            --set mongodb.enabled=false --set backend.externalMongodb.uri=mongodb://db/reconcile \
+            --set ingress.enabled=true > rendered/external.yaml
+
+      - name: Validate against Kubernetes schemas
+        run: |
+          docker run --rm -v "$PWD/rendered:/r" ghcr.io/yannh/kubeconform:v0.8.0 \
+            -strict -summary /r/default.yaml /r/external.yaml

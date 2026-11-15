@@ -1,0 +1,17 @@
+{{- range $component := list "backend" "frontend" }}
+{{- $v := index $.Values $component }}
+{{- if gt (int $v.replicaCount) 1 }}
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ include "reconcile.fullname" $ }}-{{ $component }}
+  labels:
+    {{- include "reconcile.labels" (dict "ctx" $ "component" $component) | nindent 4 }}
+spec:
+  maxUnavailable: {{ $v.podDisruptionBudget.maxUnavailable }}
+  selector:
+    matchLabels:
+      {{- include "reconcile.selectorLabels" (dict "ctx" $ "component" $component) | nindent 6 }}
+{{- end }}
+{{- end }}

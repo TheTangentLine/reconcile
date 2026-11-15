@@ -1,0 +1,15 @@
+{{- $c := dict "ctx" $ "component" "backend" }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "reconcile.fullname" . }}-backend
+  labels:
+    {{- include "reconcile.labels" $c | nindent 4 }}
+spec:
+  type: {{ .Values.backend.service.type }}
+  selector:
+    {{- include "reconcile.selectorLabels" $c | nindent 4 }}
+  ports:
+    - name: http
+      port: {{ .Values.backend.service.port }}
+      targetPort: http

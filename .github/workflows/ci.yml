@@ -129,3 +129,62 @@ jobs:
             echo "digest: ${{ steps.build.outputs.digest }}"
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
+
+  # GitOps: point the Helm chart at the images just pushed. The commit is made
+  # with GITHUB_TOKEN, which never triggers another workflow run (no loop).
+  update-chart:
+    name: Update chart image tags
+    needs: image
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    # One bump at a time; queued runs wait instead of being cancelled.
+    concurrency:
+      group: update-chart
+      cancel-in-progress: false
+    env:
+      TAG: ${{ github.sha }}
+      VALUES: charts/reconcile/values.yaml
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: main
+          fetch-depth: 0 # needed to compare commits below
+
+      - name: Set image tags in values.yaml
+        id: bump
+        run: |
+          current=$(yq '.backend.image.tag' "$VALUES")
+          # A slower, older run must not roll the chart back past a newer commit.
+          if [ -n "$current" ] && git cat-file -e "${current}^{commit}" 2>/dev/null \
+             && git merge-base --is-ancestor "$TAG" "$current"; then
+            echo "values.yaml is already at $current, which includes $TAG. Nothing to do."
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          # Edit only the two tag lines (yq locates them) so comments and
+          # formatting in values.yaml stay untouched.
+          for svc in backend frontend; do
+            line=$(yq ".${svc}.image.tag | line" "$VALUES")
+            sed -i "${line}s/tag: .*/tag: \"${TAG}\"/" "$VALUES"
+          done
+          test "$(yq '.backend.image.tag' "$VALUES")" = "$TAG"
+          test "$(yq '.frontend.image.tag' "$VALUES")" = "$TAG"
+          git diff
+          echo "changed=true" >> "$GITHUB_OUTPUT"
+
+      - name: Commit and push
+        if: steps.bump.outputs.changed == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          subject=$(git log -1 --format=%s "$TAG")
+          git commit -am "chore(chart): deploy ${TAG:0:7}" -m "Set backend and frontend image tags to ${TAG}" -m "Built from: ${subject}"
+          # Someone may have pushed meanwhile; rebase and retry.
+          for _ in 1 2 3; do
+            git push origin HEAD:main && exit 0
+            git pull --rebase origin main
+          done
+          exit 1

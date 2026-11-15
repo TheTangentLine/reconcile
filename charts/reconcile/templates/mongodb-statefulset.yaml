@@ -1,0 +1,85 @@
+{{- if .Values.mongodb.enabled }}
+{{- $c := dict "ctx" $ "component" "mongodb" }}
+{{- $v := .Values.mongodb }}
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ include "reconcile.mongodb.fullname" . }}
+  labels:
+    {{- include "reconcile.labels" $c | nindent 4 }}
+spec:
+  # A single member: running a replica set needs extra setup (keyfile,
+  # rs.initiate); use an operator or a managed database for that.
+  replicas: 1
+  serviceName: {{ include "reconcile.mongodb.fullname" . }}
+  selector:
+    matchLabels:
+      {{- include "reconcile.selectorLabels" $c | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "reconcile.labels" $c | nindent 8 }}
+    spec:
+      securityContext:
+        # The mongo image runs mongod as uid 999.
+        fsGroup: 999
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: mongodb
+          image: "{{ $v.image.repository }}:{{ $v.image.tag }}"
+          imagePullPolicy: {{ $v.image.pullPolicy }}
+          ports:
+            - name: mongodb
+              containerPort: 27017
+          env:
+            - name: MONGO_INITDB_ROOT_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "reconcile.mongodb.secretName" . }}
+                  key: mongodb-root-username
+            - name: MONGO_INITDB_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "reconcile.mongodb.secretName" . }}
+                  key: mongodb-root-password
+          readinessProbe:
+            exec:
+              command: [mongosh, --quiet, --eval, "db.adminCommand('ping').ok"]
+            periodSeconds: 10
+            timeoutSeconds: 5
+          livenessProbe:
+            exec:
+              command: [mongosh, --quiet, --eval, "db.adminCommand('ping').ok"]
+            initialDelaySeconds: 30
+            periodSeconds: 20
+            timeoutSeconds: 5
+          resources:
+            {{- toYaml $v.resources | nindent 12 }}
+          volumeMounts:
+            - name: data
+              mountPath: /data/db
+      {{- with $v.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with $v.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with $v.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes: [ReadWriteOnce]
+        {{- with $v.persistence.storageClass }}
+        storageClassName: {{ . | quote }}
+        {{- end }}
+        resources:
+          requests:
+            storage: {{ $v.persistence.size }}
+{{- end }}

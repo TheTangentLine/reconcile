@@ -1,0 +1,17 @@
+Reconcile is installed as "{{ .Release.Name }}" in namespace "{{ .Release.Namespace }}".
+
+  backend   {{ .Values.backend.image.repository }}:{{ .Values.backend.image.tag }}  x{{ .Values.backend.replicaCount }}
+  frontend  {{ .Values.frontend.image.repository }}:{{ .Values.frontend.image.tag }}  x{{ .Values.frontend.replicaCount }}
+
+{{- if .Values.ingress.enabled }}
+
+Open:
+{{- range .Values.ingress.hosts }}
+  http{{ if $.Values.ingress.tls }}s{{ end }}://{{ .host }}
+{{- end }}
+{{- else }}
+
+Try it locally:
+  kubectl -n {{ .Release.Namespace }} port-forward svc/{{ include "reconcile.fullname" . }}-frontend 8080:{{ .Values.frontend.service.port }}
+  open http://localhost:8080
+{{- end }}

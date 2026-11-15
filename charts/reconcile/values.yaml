@@ -1,0 +1,93 @@
+# Default values for the reconcile chart.
+
+nameOverride: ""
+fullnameOverride: ""
+
+# Needed while the GHCR packages are private, e.g. [{ name: ghcr-pull }].
+imagePullSecrets: []
+
+backend:
+  replicaCount: 3
+  image:
+    repository: ghcr.io/thetangentline/reconcile/backend
+    # Full commit SHA. Updated automatically by the CI "Update chart" job.
+    tag: ""
+    pullPolicy: IfNotPresent
+  service:
+    type: ClusterIP
+    port: 4000
+  # Origins allowed to call the API directly from a browser. Requests through
+  # the frontend are same-origin and don't need this.
+  corsOrigin: ""
+  # Insert the initial methods when the database is empty.
+  seedOnStart: true
+  # Used only when mongodb.enabled=false. Either a full URI, or an existing
+  # Secret with a MONGODB_URI key.
+  externalMongodb:
+    uri: ""
+    existingSecret: ""
+  resources:
+    requests: { cpu: 50m, memory: 96Mi }
+    limits: { memory: 256Mi }
+  podDisruptionBudget:
+    maxUnavailable: 1
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+
+frontend:
+  replicaCount: 3
+  image:
+    repository: ghcr.io/thetangentline/reconcile/frontend
+    # Full commit SHA. Updated automatically by the CI "Update chart" job.
+    tag: ""
+    pullPolicy: IfNotPresent
+  service:
+    type: ClusterIP
+    port: 80
+  # Cluster DNS service the frontend's nginx uses to find the backend.
+  dnsResolver: kube-dns.kube-system.svc.cluster.local
+  resources:
+    requests: { cpu: 25m, memory: 32Mi }
+    limits: { memory: 128Mi }
+  podDisruptionBudget:
+    maxUnavailable: 1
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+
+# Single-node MongoDB StatefulSet with a persistent volume. For production you
+# may prefer a managed database: set enabled=false and backend.externalMongodb.
+mongodb:
+  enabled: true
+  image:
+    repository: mongo
+    tag: "8"
+    pullPolicy: IfNotPresent
+  database: reconcile
+  auth:
+    rootUsername: root
+    # Leave empty to generate a random password once (kept across upgrades).
+    rootPassword: ""
+    # Or use your own Secret with keys mongodb-root-username / mongodb-root-password.
+    existingSecret: ""
+  persistence:
+    size: 5Gi
+    storageClass: ""
+  resources:
+    requests: { cpu: 100m, memory: 256Mi }
+    limits: { memory: 1Gi }
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+
+ingress:
+  enabled: false
+  className: ""
+  annotations: {}
+  # All traffic goes to the frontend; it proxies /api to the backend itself.
+  hosts:
+    - host: reconcile.local
+  tls: []
+  #  - secretName: reconcile-tls
+  #    hosts: [reconcile.local]

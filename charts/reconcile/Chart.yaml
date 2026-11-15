@@ -1,0 +1,7 @@
+apiVersion: v2
+name: reconcile
+description: Reconcile, a Rubik's cube learning app (frontend, API and MongoDB)
+type: application
+version: 0.1.0
+# Image tags are set per service in values.yaml (commit SHAs from CI).
+appVersion: "0.1.0"

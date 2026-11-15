@@ -1,5 +1,8 @@
 server {
-  listen 80;
+  # Filled in at container start by the nginx image's envsubst step:
+  #   API_UPSTREAM  where /api is proxied to
+  #   DNS_RESOLVER  DNS server used to re-resolve that host
+  listen 8080;
   server_name _;
   root /usr/share/nginx/html;
   index index.html;
@@ -8,11 +11,11 @@ server {
   gzip_types text/css application/javascript application/json image/svg+xml;
   gzip_min_length 1024;
 
-  # API requests go to the backend container.
+  # API requests go to the backend.
   location /api/ {
-    # Docker's DNS, re-resolved every 10s so a recreated backend container is found.
-    resolver 127.0.0.11 valid=10s ipv6=off;
-    set $backend http://backend:4000;
+    # Re-resolved every 10s so a recreated backend container / pod is found.
+    resolver ${DNS_RESOLVER} valid=10s ipv6=off;
+    set $backend ${API_UPSTREAM};
     proxy_pass $backend;
     proxy_connect_timeout 3s;
     proxy_read_timeout 30s;
