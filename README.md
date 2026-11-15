@@ -9,6 +9,7 @@ model, choose a formula, and follow it one turn at a time.
 - **Database:** MongoDB
 - **Delivery:** Docker images on GHCR, a Helm chart, and Argo CD (GitOps)
 - **Cloud:** AWS (VPC, EKS, DocumentDB, Application Load Balancer) built with Terraform
+- **Static version:** the same frontend with bundled data, no backend, deployable to Vercel
 
 > [!TIP]
 > New to Kubernetes, Argo CD or AWS networking? Read [docs/](docs/README.md)
@@ -92,6 +93,7 @@ the app on top. Details: [docs/07-aws.md](docs/07-aws.md).
 ```
 apps/
   frontend/            React app, its Dockerfile and nginx config template
+  vercel-frontend/     Same app with bundled data and no backend, for Vercel
   backend/             Express API, Mongoose model, seed data, tests, Dockerfile
   docker-compose.yml   Runs mongo + backend + frontend locally
 charts/reconcile/      Helm chart (Deployments, Services, MongoDB StatefulSet, ...)
@@ -102,6 +104,7 @@ infra/                 Terraform for AWS: VPC, EKS, DocumentDB, LB Controller, A
   ci.yml               Test -> build and push images -> bump chart tags
   chart.yml            Lint and validate the Helm chart
   infra.yml            Format and validate the Terraform
+  vercel-frontend.yml  Lint, test and build the static frontend
 docs/                  Beginner-friendly guide to Kubernetes, Helm and Argo CD
 ```
 
@@ -355,6 +358,30 @@ cd infra && terraform destroy
 > database and its data; no final backup is kept unless you set
 > `docdb_skip_final_snapshot = false`.
 
+### Option 5: Frontend only, on Vercel
+
+[`apps/vercel-frontend`](apps/vercel-frontend/README.md) is the same site with
+the method and formula data **bundled in**, so it needs no backend or
+database. It's the quickest way to put the app online, and it's free on
+Vercel's hobby plan.
+
+```bash
+cd apps/vercel-frontend
+npm install
+npm run dev          # http://localhost:5173, no backend needed
+```
+
+To deploy: on vercel.com, **import this repository** and set **Root
+Directory** to `apps/vercel-frontend`. `vercel.json` handles the rest. Pushes
+to `main` go to production, pull requests get preview URLs, and commits that
+don't touch the folder are skipped. Full steps in its
+[README](apps/vercel-frontend/README.md#deploy-to-vercel).
+
+> [!NOTE]
+> The bundled data is a copy of the backend seed. Formula edits made in
+> MongoDB (or in `apps/backend/src/seed/methods.ts`) don't reach the Vercel
+> site until you copy them into `apps/vercel-frontend/src/data/methods.ts`.
+
 ---
 
 ## Tests
@@ -362,6 +389,7 @@ cd infra && terraform destroy
 ```bash
 cd apps/backend  && npm test    # API tests against an in-memory MongoDB
 cd apps/frontend && npm test    # cube logic and API client
+cd apps/vercel-frontend && npm test   # cube logic and the bundled data
 ```
 
 Other checks CI runs: `npm run typecheck` (both), `npm run lint` (frontend),
