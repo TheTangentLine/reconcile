@@ -6,17 +6,14 @@ const HIDDEN = { _id: 0, __v: 0, order: 0, createdAt: 0, updatedAt: 0 } as const
 
 /** GET /api/methods: every method without its stages, plus counts for the list UI. */
 export async function listMethods(_req: Request, res: Response) {
-  const methods = await Method.aggregate([
-    { $sort: { order: 1, name: 1 } },
-    {
-      $addFields: {
-        stageCount: { $size: '$stages' },
-        formulaCount: { $sum: { $map: { input: '$stages', in: { $size: '$$this.formulas' } } } },
-      },
-    },
-    { $project: { ...HIDDEN, stages: 0 } },
-  ])
-  res.json(methods)
+  // Plain find + counting in JS (no $map/$sum aggregation) so this also runs
+  // on MongoDB-compatible databases such as Amazon DocumentDB.
+  const methods = await Method.find({}, HIDDEN).sort({ order: 1, name: 1 }).lean()
+  res.json(methods.map(({ stages, ...m }) => ({
+    ...m,
+    stageCount: stages.length,
+    formulaCount: stages.reduce((n, s) => n + s.formulas.length, 0),
+  })))
 }
 
 /** GET /api/methods/:slug: one method with all stages and formulas. */

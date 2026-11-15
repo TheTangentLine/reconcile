@@ -21,6 +21,10 @@ RUN npm ci --omit=dev && npm cache clean --force
 
 COPY --from=build /app/dist ./dist
 
+# CA bundle for Amazon DocumentDB / RDS TLS connections (not in system trust stores).
+RUN mkdir -p -m 755 /app/certs
+ADD --chmod=644 https://truststore.pki.rds.amazonaws.com/global/global-bundle.pem /app/certs/rds-global-bundle.pem
+
 USER node
 EXPOSE 4000
 HEALTHCHECK --interval=15s --timeout=3s --start-period=10s --retries=3 \
