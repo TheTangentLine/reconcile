@@ -19,8 +19,7 @@ spec:
   {{- end }}
   rules:
     {{- range .Values.ingress.hosts }}
-    - host: {{ .host | quote }}
-      http:
+    - http:
         paths:
           - path: /
             pathType: Prefix
@@ -29,5 +28,9 @@ spec:
                 name: {{ include "reconcile.fullname" $ }}-frontend
                 port:
                   name: http
+      {{- /* No host: answer on any hostname, e.g. the load balancer's own DNS name. */}}
+      {{- with .host }}
+      host: {{ . | quote }}
+      {{- end }}
     {{- end }}
 {{- end }}

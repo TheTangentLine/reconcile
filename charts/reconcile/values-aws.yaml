@@ -1,0 +1,31 @@
+# Overrides for the AWS (EKS) environment, layered on top of values.yaml.
+# Used by argocd/application-aws.yaml. Image tags still come from values.yaml.
+
+# Amazon DocumentDB (created by infra/) replaces the in-cluster MongoDB.
+mongodb:
+  enabled: false
+
+backend:
+  externalMongodb:
+    # Created by Terraform (infra/kubernetes.tf) with the full connection string.
+    existingSecret: reconcile-backend-db
+
+# Public entry point: the AWS Load Balancer Controller turns this Ingress into
+# an internet-facing Application Load Balancer in the public subnets.
+ingress:
+  enabled: true
+  className: alb
+  annotations:
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    # Send traffic straight to pod IPs in the private subnets.
+    alb.ingress.kubernetes.io/target-type: ip
+    alb.ingress.kubernetes.io/healthcheck-path: /
+    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}]'
+    # With a domain and an ACM certificate, switch to HTTPS:
+    # alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}, {"HTTPS": 443}]'
+    # alb.ingress.kubernetes.io/ssl-redirect: "443"
+    # alb.ingress.kubernetes.io/certificate-arn: arn:aws:acm:<region>:<account>:certificate/<id>
+  hosts:
+    # Empty host = answer on the load balancer's own DNS name.
+    # Set a real domain here once you have one.
+    - host: ""
