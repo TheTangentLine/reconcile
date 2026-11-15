@@ -11,7 +11,7 @@ backend:
   image:
     repository: ghcr.io/thetangentline/reconcile/backend
     # Full commit SHA. Updated automatically by the CI "Update chart" job.
-    tag: "0d1665595896c726151cea94db3357646160d131"
+    tag: "3696f5dea1bb685571f668c198b2501aff6fd7d2"
     pullPolicy: IfNotPresent
   service:
     type: ClusterIP
@@ -40,7 +40,7 @@ frontend:
   image:
     repository: ghcr.io/thetangentline/reconcile/frontend
     # Full commit SHA. Updated automatically by the CI "Update chart" job.
-    tag: "0d1665595896c726151cea94db3357646160d131"
+    tag: "3696f5dea1bb685571f668c198b2501aff6fd7d2"
     pullPolicy: IfNotPresent
   service:
     type: ClusterIP
