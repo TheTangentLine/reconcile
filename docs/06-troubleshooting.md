@@ -230,4 +230,4 @@ for permanent changes.
 | Take a node out for maintenance | `kubectl drain minikube-m03 --ignore-daemonsets --delete-emptydir-data` |
 | Put it back | `kubectl uncordon minikube-m03` |
 
-Next: [7. AWS →](07-aws.md)
+Next: [7. AWS basics →](07-aws-basics.md)

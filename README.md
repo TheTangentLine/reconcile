@@ -86,7 +86,8 @@ Only the load balancer faces the internet. Worker nodes have no public IPs and
 reach out through the NAT gateway. The database subnets have no route to the
 internet at all, and DocumentDB accepts connections only from the cluster.
 Terraform in [`infra/`](infra/README.md) builds all of this; Argo CD deploys
-the app on top. Details: [docs/07-aws.md](docs/07-aws.md).
+the app on top. Details: [docs/07-aws-basics.md](docs/07-aws-basics.md) (AWS from zero) and
+[docs/08-aws-reconcile.md](docs/08-aws-reconcile.md) (this setup, step by step).
 
 ### Repository layout
 
@@ -270,7 +271,8 @@ Something not working? See [docs/06-troubleshooting.md](docs/06-troubleshooting.
 
 The real thing: a VPC with public, private and database subnets across three
 availability zones, an EKS cluster, Amazon DocumentDB, and a public load
-balancer. Read [docs/07-aws.md](docs/07-aws.md) for the story behind each piece.
+balancer. New to AWS? Read [docs/07-aws-basics.md](docs/07-aws-basics.md) first, then
+[docs/08-aws-reconcile.md](docs/08-aws-reconcile.md) for what each piece here does.
 
 > [!WARNING]
 > This costs real money, roughly **$300/month (~$10/day)** while it runs,

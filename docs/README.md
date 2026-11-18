@@ -18,7 +18,8 @@ shows what it is called in Kubernetes and where it is in this project.
 | 4 | [Argo CD](04-argocd.md) | GitOps, sync, self-heal, and what deleting things does |
 | 5 | [The pipeline](05-the-pipeline.md) | Push → tests → images → bot commit → deploy |
 | 6 | [Troubleshooting](06-troubleshooting.md) | Real problems we hit, and a command cheat sheet |
-| 7 | [AWS](07-aws.md) | The café in a real city: VPC, public/private/database subnets, EKS, DocumentDB, Terraform |
+| 7 | [AWS basics](07-aws-basics.md) | AWS from zero: regions, IAM, IP ranges, VPC, subnets, routing, NAT, security groups, EC2, load balancers |
+| 8 | [Reconcile on AWS](08-aws-reconcile.md) | Our setup step by step: network, EKS, the load balancer controller, DocumentDB, Terraform, a request's journey, costs, troubleshooting |
 
 ## The cast
 
@@ -43,7 +44,7 @@ Keep this table nearby. Every page uses these characters.
 | The **central bakery** that tests recipes and seals new kits | **CI** (GitHub Actions) | `.github/workflows/ci.yml` |
 | The **warehouse** of sealed kits | **Container registry** | GHCR (GitHub Container Registry) |
 
-On AWS ([chapter 7](07-aws.md)) a few more characters join:
+On AWS ([chapters 7](07-aws-basics.md) and [8](08-aws-reconcile.md)) a few more characters join:
 
 | In the café story | In AWS | In this project |
 |---|---|---|
@@ -56,6 +57,11 @@ On AWS ([chapter 7](07-aws.md)) a few more characters join:
 | **Guards** with a guest list | **security groups** | |
 | The **management company** running the manager's office | **Amazon EKS** | `infra/eks.tf` |
 | The **architect's plans** and **ledger** | **Terraform** and its **state** | `infra/` |
+| **Key cards** saying which doors each person may open | **IAM** users, roles and policies | |
+| **Signposts** in each room ("the exit is that way") | **route tables** | |
+| The **liaison to city hall** who has the front door built | **AWS Load Balancer Controller** | a pod in `kube-system` |
+| The liaison's **staff badge** | **EKS Pod Identity** | `infra/eks.tf` |
+| The **professional pantry service** | **Amazon DocumentDB** | `infra/database.tf` |
 
 ## One word to remember: *reconcile*
 

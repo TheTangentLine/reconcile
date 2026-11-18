@@ -3,7 +3,8 @@
 Builds everything Reconcile needs on AWS **around** the app. Argo CD then
 deploys the app itself from Git.
 
-New to these ideas? Read [docs/07-aws.md](../docs/07-aws.md) first.
+New to AWS? Read [docs/07-aws-basics.md](../docs/07-aws-basics.md) (AWS from zero), then
+[docs/08-aws-reconcile.md](../docs/08-aws-reconcile.md), which walks through every file here.
 
 ```mermaid
 flowchart TB
@@ -57,7 +58,7 @@ kubectl apply -f ../argocd/application-aws.yaml  # Argo CD deploys the app
 > To tear down, **delete the Argo CD Application first** so the load balancer
 > is removed, then run `terraform destroy`. Otherwise the leftover load
 > balancer blocks deleting the VPC. See
-> [docs/07-aws.md → teardown](../docs/07-aws.md#closing-the-café-teardown).
+> [docs/08-aws-reconcile.md → Tearing down](../docs/08-aws-reconcile.md#tearing-down).
 
 ## Settings you'll most likely change
 
