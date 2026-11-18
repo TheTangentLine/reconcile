@@ -6,8 +6,12 @@ anywhere that serves static files. It's set up for [Vercel](https://vercel.com).
 
 **Live:** https://reconcile-rubik.vercel.app
 
-It's a copy of [`apps/frontend`](../frontend) with one difference: the data
-layer.
+It started as a copy of [`apps/frontend`](../frontend) and adds a few things
+of its own:
+
+- **Play mode** (`/play`): a free 3D cube with a timer and a formula sheet.
+- **Full OLL (57) and PLL (21)** in the CFOP data, on top of the 2-look sets.
+- **Bundled data** instead of the backend API.
 
 | | `apps/frontend` | `apps/vercel-frontend` |
 |---|---|---|
@@ -16,15 +20,35 @@ layer.
 | Needs | backend + database | nothing |
 | Hosted on | Docker / Kubernetes (nginx) | Vercel (or any static host) |
 | Editing formulas | change the database | edit `src/data/methods.ts`, push |
+| Play mode, full OLL/PLL | no | yes |
 
-Both apps expose the same `useMethods()` / `useMethod(slug)` hooks, so every
-page and component file is identical. A change to a component can be copied
-across as-is.
+Both apps expose the same `useMethods()` / `useMethod(slug)` hooks, so the
+shared pages and components (home, method page, guide, formula list) still
+match. The files that differ are the data layer, `src/pages/PlayPage.tsx`,
+`src/play/`, `src/cube/drag.ts`, and drag-to-turn support in
+`src/cube/CubeView.tsx`.
 
 > [!NOTE]
 > `src/data/methods.ts` started as a copy of the backend seed
 > (`apps/backend/src/seed/methods.ts`). The two don't sync automatically; if
 > you change formulas in one, copy them to the other.
+
+## Play mode
+
+Open **`/play`** (or *Play* in the top bar).
+
+| Control | How |
+|---|---|
+| **Mouse / finger** | Drag a sticker to turn its layer. Drag the background to look around. |
+| **Keyboard** | `R L U D F B` turn that face clockwise, `Shift` + letter counter-clockwise, `M E S` slices, `X Y Z` or arrow keys turn the whole cube |
+| **Buttons** | The move pad under the cube (handy on phones) |
+| **Space** | New scramble; the timer starts on your first turn and stops when the cube is solved |
+| **⌫ / Ctrl+Z**, **Esc** | Undo, reset |
+
+The **formula sheet** next to the cube lists every formula by method and
+stage, with search. **Practice** sets up that formula's case (timed);
+**Show me** sets it up and plays the formula. Times, best, ao5 and ao12 are
+saved in your browser (localStorage) only.
 
 ## Run locally
 
@@ -35,7 +59,7 @@ npm run dev        # http://localhost:5173
 ```
 
 ```bash
-npm test           # cube logic + checks that every bundled formula solves its case
+npm test           # cube logic, drag-to-turn, timer, and checks on every bundled formula
 npm run lint
 npm run build      # static files in dist/
 npm run preview    # serve dist/ like production

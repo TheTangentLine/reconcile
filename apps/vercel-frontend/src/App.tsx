@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { Link, Route, Routes } from 'react-router'
+import { Link, NavLink, Route, Routes } from 'react-router'
 import MethodPicker from './components/MethodPicker'
 import { MethodPickerContext } from './components/methodPicker'
 import { PixelArt } from './components/Pixel'
@@ -7,6 +7,7 @@ import { HEART } from './components/pixelIcons'
 import { useMethods } from './api/useApi'
 import HomePage from './pages/HomePage'
 import MethodPage from './pages/MethodPage'
+import PlayPage from './pages/PlayPage'
 import NotFound from './pages/NotFound'
 
 function BrandMark() {
@@ -56,7 +57,10 @@ export default function App() {
             <span>Always in beta</span>
           </div>
           <div className="tb-cell tb-grow" />
-          <div className="tb-cell">
+          <div className="tb-cell tb-actions">
+            <NavLink to="/play" className={({ isActive }) => `pill ${isActive ? 'is-active' : ''}`}>
+              Play
+            </NavLink>
             <button type="button" className="pill" onClick={picker.open} aria-haspopup="dialog">
               Methods
               <span className="burger" aria-hidden><i /><i /><i /></span>
@@ -68,6 +72,7 @@ export default function App() {
           <Routes>
             <Route path="/" element={<HomePage />} />
             <Route path="/method/:slug" element={<MethodPage />} />
+            <Route path="/play" element={<PlayPage />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </main>
@@ -86,6 +91,7 @@ export default function App() {
             <Stamp />
           </div>
           <nav className="foot-cell foot-links" aria-label="Footer">
+            <Link to="/play">Play &amp; time yourself</Link>
             <button type="button" className="link-plain" onClick={picker.open}>All methods</button>
             {(methods.status === 'success' ? methods.data : []).filter((m) => !m.comingSoon).map((m) => (
               <Link key={m.slug} to={`/method/${m.slug}`}>{m.name}</Link>

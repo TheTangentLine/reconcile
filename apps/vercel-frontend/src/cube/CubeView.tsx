@@ -1,7 +1,8 @@
 import { OrbitControls, RoundedBox } from '@react-three/drei'
-import { Canvas, useFrame, type ThreeEvent } from '@react-three/fiber'
+import { Canvas, useFrame, useThree, type RootState, type ThreeEvent } from '@react-three/fiber'
 import { useLayoutEffect, useMemo, useRef, type ReactNode } from 'react'
 import * as THREE from 'three'
+import { moveFromDrag, type Project } from './drag'
 import { COLORS, isInLayer, type CubeState, type Cubie, type Move, type Vec3 } from './model'
 
 export interface ActiveMove {
@@ -16,6 +17,8 @@ interface CubeViewProps {
   turnDuration?: number
   onMoveDone?: () => void
   onStickerClick?: (pos: Vec3, normal: Vec3) => void
+  /** Enables drag-to-turn: drag a sticker to turn its layer (mouse or touch). */
+  onTurn?: (move: Move) => void
   autoRotate?: boolean
   /** Render at low resolution and upscale with hard pixels. */
   pixelated?: boolean
@@ -52,12 +55,15 @@ function useStickerGeometry() {
   }, [])
 }
 
+type StickerDown = (pos: Vec3, normal: Vec3, e: ThreeEvent<PointerEvent>) => void
+
 function CubieMesh({
-  cubie, geometry, onStickerClick,
+  cubie, geometry, onStickerClick, onStickerDown,
 }: {
   cubie: Cubie
   geometry: THREE.ShapeGeometry
   onStickerClick?: (pos: Vec3, normal: Vec3) => void
+  onStickerDown?: StickerDown
 }) {
   return (
     <group position={cubie.pos}>
@@ -79,6 +85,7 @@ function CubieMesh({
                 }
               : undefined
           }
+          onPointerDown={onStickerDown ? (e) => onStickerDown(cubie.pos, s.normal, e) : undefined}
         >
           <meshStandardMaterial color={COLORS[s.color].hex} roughness={0.35} />
         </mesh>
@@ -89,10 +96,55 @@ function CubieMesh({
 
 const easeInOut = (t: number) => (t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2)
 
+/** Pixels the pointer must travel before a drag counts as a turn. */
+const DRAG_THRESHOLD = 12
+
+/** Turn the camera's orbit controls (drei's makeDefault controls) on or off. */
+function setOrbit(get: () => RootState, enabled: boolean) {
+  const controls = get().controls as unknown as { enabled: boolean } | null
+  if (controls) controls.enabled = enabled
+}
+
 function CubeModel({
-  state, active, turnDuration = 0.35, onMoveDone, onStickerClick, autoRotate,
+  state, active, turnDuration = 0.35, onMoveDone, onStickerClick, onTurn, autoRotate,
 }: CubeViewProps) {
   const geometry = useStickerGeometry()
+  const get = useThree((s) => s.get)
+
+  // Drag-to-turn. R3F handles this pointerdown before OrbitControls sees it,
+  // so switching the controls off here stops the camera from orbiting during
+  // the drag. Dragging the background still orbits as usual.
+  const onStickerDown: StickerDown | undefined = onTurn && ((pos, normal, e) => {
+    if (e.button !== 0) return
+    e.stopPropagation()
+    setOrbit(get, false)
+    const camera = e.camera
+    const rect = (e.nativeEvent.target as Element).getBoundingClientRect()
+    const project: Project = (p) => {
+      const v = new THREE.Vector3(p[0], p[1], p[2]).project(camera)
+      return [((v.x + 1) / 2) * rect.width, ((1 - v.y) / 2) * rect.height]
+    }
+    const point: Vec3 = [e.point.x, e.point.y, e.point.z]
+    const x0 = e.nativeEvent.clientX
+    const y0 = e.nativeEvent.clientY
+    let turned = false
+    const move = (ev: PointerEvent) => {
+      const dx = ev.clientX - x0
+      const dy = ev.clientY - y0
+      if (turned || Math.hypot(dx, dy) < DRAG_THRESHOLD) return
+      turned = true // one turn per drag
+      onTurn(moveFromDrag(pos, normal, point, [dx, dy], project))
+    }
+    const end = () => {
+      window.removeEventListener('pointermove', move)
+      window.removeEventListener('pointerup', end)
+      window.removeEventListener('pointercancel', end)
+      setOrbit(get, true)
+    }
+    window.addEventListener('pointermove', move)
+    window.addEventListener('pointerup', end)
+    window.addEventListener('pointercancel', end)
+  })
   const pivot = useRef<THREE.Group>(null)
   const root = useRef<THREE.Group>(null)
   const progress = useRef(0)
@@ -127,11 +179,11 @@ function CubeModel({
     <group ref={root}>
       <group ref={pivot}>
         {moving.map((c) => (
-          <CubieMesh key={c.id} cubie={c} geometry={geometry} onStickerClick={onStickerClick} />
+          <CubieMesh key={c.id} cubie={c} geometry={geometry} onStickerClick={onStickerClick} onStickerDown={onStickerDown} />
         ))}
       </group>
       {still.map((c) => (
-        <CubieMesh key={c.id} cubie={c} geometry={geometry} onStickerClick={onStickerClick} />
+        <CubieMesh key={c.id} cubie={c} geometry={geometry} onStickerClick={onStickerClick} onStickerDown={onStickerDown} />
       ))}
     </group>
   )
@@ -151,7 +203,7 @@ export default function CubeView({ children, ...props }: CubeViewProps) {
         <directionalLight position={[5, 8, 6]} intensity={1.6} />
         <directionalLight position={[-6, -3, -4]} intensity={0.5} />
         <CubeModel {...props} />
-        <OrbitControls enablePan={false} minDistance={6} maxDistance={14} />
+        <OrbitControls makeDefault enablePan={false} minDistance={6} maxDistance={14} />
       </Canvas>
       {children}
     </div>

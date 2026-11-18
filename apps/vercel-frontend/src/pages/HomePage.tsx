@@ -108,6 +108,7 @@ export default function HomePage() {
             <button type="button" className="btn primary big" onClick={picker.open} aria-haspopup="dialog">
               <PixelArt rows={PLAY} scale={2} /> Choose a method
             </button>
+            <Link className="btn big" to="/play">Play &amp; time yourself</Link>
             <a className="btn big ghost" href="#how">How it works</a>
           </div>
         </div>

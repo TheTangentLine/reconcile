@@ -333,3 +333,21 @@ export function randomScramble(length = 20): string {
   }
   return out.join(' ')
 }
+
+// ---------- Single-layer turns (for drag-to-turn) ----------
+
+const LAYER_LETTERS = ['R', 'L', 'U', 'D', 'F', 'B', 'M', 'E', 'S'] as const
+
+/**
+ * The standard move for turning one layer: `axis` (0 x, 1 y, 2 z), `layer`
+ * (-1, 0 or 1 along that axis) and the turn direction as a right-hand-rule
+ * quarter turn around +axis. E.g. layerMove(0, 1, -1) is "R".
+ */
+export function layerMove(axis: Axis, layer: number, quarterTurns: 1 | -1): Move {
+  const letter = LAYER_LETTERS.find((l) => BASE[l].axis === axis && BASE[l].layers[0] === layer)
+  if (!letter) throw new Error(`No layer ${layer} on axis ${axis}`)
+  return parseMove(quarterTurns === BASE[letter].dir ? letter : `${letter}'`)
+}
+
+/** Whole-cube rotations (x, y, z) don't change the puzzle, only how you hold it. */
+export const isRotation = (move: Move) => move.layers.length === 3
